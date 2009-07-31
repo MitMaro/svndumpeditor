@@ -4,7 +4,7 @@
        By: Tim Oram [t.oram@mitmaro.ca]
   Website: http://www.mitmaro.ca/svneditor
     Email: svndump@mitmaro.ca
-  Created: June 26, 2009; Updated June 29, 2009
+  Created: June 26, 2009; Updated July 31, 2009
   Purpose: Used for parsing svn dump files and re-writing them
  License:
 Copyright (c) 2009, Tim Oram
@@ -80,18 +80,18 @@ class Node:
             'Node-path',
             'Node-kind',
             'Node-action',
-            'Prop-content-length',
             'Node-copyfrom-rev',
             'Node-copyfrom-path',
             'Text-copy-source-md5',
+            'Text-copy-source-sha1',
+            'Prop-content-length',
+            'Text-content-length',
             'Text-delta',
             'Prop-delta',
             'Text-delta-base-md5',
             'Text-delta-base-sha1',
-            'Text-copy-source-sha1',
-            'Text-content-sha1',
-            'Text-content-length',
             'Text-content-md5',
+            'Text-content-sha1',
             'Content-length',
         ]
         
