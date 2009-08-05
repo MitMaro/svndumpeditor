@@ -4,7 +4,7 @@
        By: Tim Oram [t.oram@mitmaro.ca]
   Website: http://www.mitmaro.ca/svneditor
     Email: svndump@mitmaro.ca
-  Created: June 26, 2009; Updated July 31, 2009
+  Created: June 26, 2009; Updated August 05, 2009
   Purpose: Used for parsing svn dump files and re-writing them
  License:
 Copyright (c) 2009, Tim Oram
@@ -50,6 +50,88 @@ class Revision:
         self.revision_number = rev
         self.property_data = None
         self.nodes = []
+
+class PropertyKeyValue:
+    """ Describes a property key value pair. """
+    def __init__(self, key, value):
+        self.key = key
+        self.keylength = len(key)
+        self.value = value
+        self.valuelength = len(value)
+
+class PropertyData:
+    """ Describes the property data as keyvalue pairs. """
+    
+    def __init__(self, data):
+        self.index = 0
+        
+        # strip the leading newline
+        self.data = data.lstrip()
+        self.length = len(self.data)
+        self.keyvaluepairs = []
+        
+    def parse(self):
+        """ Extracts key value pairs from the raw property data. """
+        try:
+            # keep looping till the end of data (EOD)
+            while True:
+                # get a line
+                line = self.getNextLine()
+                tmp = line.split()
+                if len(tmp) is not 2 and tmp[0] is not "K":
+                    raise ParseError("Invalid Property Key")
+                
+                # extract the key value
+                key = self.getChunk(int(tmp[1]))
+                
+                # skip the trailing newline
+                self.getNextLine()
+                
+                line = self.getNextLine()
+
+                tmp = line.split()
+                if len(tmp) is not 2 and tmp[0] is not "V":
+                    raise ParseError("Invalid Property Value")
+                
+                # extract the value value
+                value = self.getChunk(int(tmp[1]))
+                
+                # add the key-value pair to the list
+                self.keyvaluepairs.append(PropertyKeyValue(key, value))
+
+                # skip the trailing newline
+                self.getNextLine()
+        
+        # fired when the end of the data is reached
+        except EndOfDump:
+            pass # do nothing
+    
+    def getChunk(self, size):
+        """ Returns a chunk of size from current index of the data """
+        start = self.index
+        self.index += size
+        if self.index > self.length: raise EndOfDump
+        return self.data[start:start + size]
+    
+    def getNextLine(self):
+        """ Grab a line of text """
+        # check to see if we are already at the end of the file
+        if self.index >= self.length: raise EndOfDump
+        
+        start = self.index
+        i = 0
+        
+        # keep checking characters till a newline (ascii 10) is found
+        while ord(self.data[self.index + i]) != 10:
+            # if we reach the end of the file
+            i += 1
+            if self.index + i >= self.length: raise EndOfDump
+        
+        self.index += i + 1
+        
+        # return the line
+        return self.data[start:start + i]
+
         
 class Node:
     """ Describes a subversion node """
@@ -254,9 +336,12 @@ class SVNDumpFileParser:
                         raise ParseError("ERROR: No Content Length")
                     rev.content_length = self.parseHeaderLine(line)
                     
-                    # get revision property data
-                    rev.property_data = \
-                        self.dumpfile.getChunk(int(rev.content_length))
+                    
+                    # parse the revision property data without PROPS-END 
+                    rev.property_data = PropertyData(
+                        self.dumpfile.getChunk(int(rev.content_length))[:-10]
+                    )
+                    rev.property_data.parse()
                     
                     line = self.dumpfile.getNextLine()
                     
@@ -295,7 +380,12 @@ class SVNDumpFileParser:
                                 # only if there is property data
                                 p_len = node.properties['Prop-content-length']
                                 if(p_len is not None):
-                                    node.property_data = d.getChunk(int(p_len))
+                                    # parse the node property data
+                                    node.property_data = PropertyData(
+                                      d.getChunk(int(p_len))[:-10]
+                                    )
+                                    node.property_data.parse()
+                                    
                                 # get the node text data (if there is any)
                                 node.text_data = d.getRemaining()
                             except EndOfDump: pass # EOD is allowed here
@@ -346,8 +436,14 @@ class SVNDumpFileWriter:
         # write revision header
         self.f.write('Revision-number: ' + str(rev.revision_number) + '\n')
         self.f.write('Prop-content-length: ' + rev.prop_content_length + '\n')
-        self.f.write('Content-length: ' + rev.content_length + '\n')
-        self.f.write(rev.property_data + '\n\n')
+        self.f.write('Content-length: ' + rev.content_length + '\n\n')
+        # write the key-value pairs to the file
+        for kp in rev.property_data.keyvaluepairs:
+            self.f.write('K ' + str(kp.keylength) + "\n")
+            self.f.write(kp.key + "\n")
+            self.f.write('V ' + str(kp.valuelength) + "\n")
+            self.f.write(kp.value + "\n")
+        self.f.write("PROPS-END\n\n")
         
         # write the node
         for node in rev.nodes:
@@ -361,7 +457,13 @@ class SVNDumpFileWriter:
                 self.f.write(prop + ": " + node.properties[prop] + "\n")
         self.f.write('\n')
         if node.property_data is not None:
-            self.f.write(node.property_data)
+            # write each key-value pair to the file
+            for kp in node.property_data.keyvaluepairs:
+                self.f.write('K ' + str(kp.keylength) + "\n")
+                self.f.write(kp.key + "\n")
+                self.f.write('V ' + str(kp.valuelength) + "\n")
+                self.f.write(kp.value + "\n")
+            self.f.write("PROPS-END\n")
         if node.text_data is not None:
             self.f.write(node.text_data)
         if node.property_data is not None or node.text_data is not None:
@@ -383,5 +485,3 @@ class ParseError(Exception):
     def _set_message(self, message): self._message = message
     message = property(_get_message, _set_message)
 
-
-    
