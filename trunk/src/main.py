@@ -4,7 +4,7 @@
        By: Tim Oram [t.oram@mitmaro.ca]
   Website: http://www.mitmaro.ca/svneditor
     Email: svndump@mitmaro.ca
-  Created: June 26, 2009; Updated June 29, 2009
+  Created: June 26, 2009; Updated August 06, 2009
   Purpose: The GUI that wraps the parser module
  License:
 Copyright (c) 2009, Tim Oram
@@ -224,7 +224,7 @@ class MainFrame(wx.Frame):
         # recalculate the contents length
         self.data.revisions[self.rev].nodes[self.node].updateContentLength()
         # it the hash value
-        self.data.revisions[self.rev].nodes[self.node].updateTextMD5()
+        self.data.revisions[self.rev].nodes[self.node].updateHash()
         
 
 if __name__ == '__main__':

@@ -4,7 +4,7 @@
        By: Tim Oram [t.oram@mitmaro.ca]
   Website: http://www.mitmaro.ca/svneditor
     Email: svndump@mitmaro.ca
-  Created: June 26, 2009; Updated August 05, 2009
+  Created: June 26, 2009; Updated August 06, 2009
   Purpose: Used for parsing svn dump files and re-writing them
  License:
 Copyright (c) 2009, Tim Oram
@@ -131,8 +131,18 @@ class PropertyData:
         
         # return the line
         return self.data[start:start + i]
-
+    
+    def calculateLength(self):
+        length = 1 # +1 for leading newline
+        for kp in self.keyvaluepairs:
+            # the key length + value length + 'k ' length + length of characters
+            # in key length + 'v ' length + length of characters in value length
+            length += kp.keylength + kp.valuelength + len(str(kp.keylength)) + \
+                  len(str(kp.valuelength)) + 8 # len('K V ') = 4 and 4 "\n"
+        length +=  9 # the length of 'PROPS-END'
         
+        return length
+    
 class Node:
     """ Describes a subversion node """
     def __init__(self):
@@ -144,15 +154,17 @@ class Node:
             "Node-action": None,
             "Content-length": None,
             "Text-content-md5": None,
+            "Text-content-sha1": None,
             "Text-content-length": None,
             "Prop-content-length": None,
-            # these will be recreated in new dump file but are not supported
+            # these will be recreated in new dump file but are not supported.
+            # Properties that contain "delta" should only exist in delta dumps
+            # which are currently not supported by this program
             "Text-delta": None,
             "Prop-delta": None,
             "Text-delta-base-md5": None,
             "Text-delta-base-sha1": None,
             "Text-copy-source-sha1": None,
-            "Text-content-sha1": None,
             "Node-copyfrom-rev": None,
             "Node-copyfrom-path": None,
             "Text-copy-source-md5": None
@@ -203,7 +215,7 @@ class Node:
         else: 
             text_length = 0
         if self.property_data is not None:
-            prop_length = len(self.property_data)
+            prop_length = self.property_data.calculateLength()
         else:
             prop_length = 0
             
@@ -213,13 +225,17 @@ class Node:
         if self.properties['Content-length'] is not None:
             self.properties['Content-length'] = str(text_length + prop_length)
             
-    def updateTextMD5(self):
-        """ Update the md5 hash of the text content """
-        if(self.text_data is not None and 
-           self.properties['Text-content-md5'] is not None):
-            md5 = hashlib.md5()
-            md5.update(self.text_data)
-            self.properties['Text-content-md5'] = md5.hexdigest()
+    def updateHash(self):
+        """ Update the md5 and sha1 hashes of the text content """
+        if(self.text_data is not None): 
+            if(self.properties['Text-content-md5'] is not None):
+                md5 = hashlib.md5()
+                md5.update(self.text_data)
+                self.properties['Text-content-md5'] = md5.hexdigest()
+            if(self.properties['Text-content-sha1'] is not None):
+                sha1 = hashlib.sha1()
+                sha1.update(self.text_data)
+                self.properties['Text-content-sha1'] = sha1.hexdigest()
             
             
 class _SVNDumpData:
