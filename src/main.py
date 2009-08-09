@@ -2,10 +2,11 @@
      File: /src/main.py
   Project: Subversion Dump Editor
        By: Tim Oram [t.oram@mitmaro.ca]
-  Website: http://www.mitmaro.ca/svneditor
+  Website: http://www.mitmaro.ca/projects/svneditor/
+           http://code.google.com/p/svndumpeditor/
     Email: svndump@mitmaro.ca
-  Created: June 26, 2009; Updated August 06, 2009
-  Purpose: The GUI that wraps the parser module
+  Created: June 26, 2009; Updated August 09, 2009
+  Purpose: The GUI that wraps the dump file parser and writer
  License:
 Copyright (c) 2009, Tim Oram
 All rights reserved.
@@ -35,7 +36,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 import wx # for the gui
 
-import parser # the parser/writer
+from SubversionDumpParser import SVNDumpFileParser # the dump parser
+from SubversionDumpWriter import SVNDumpFileWriter # the dump writer
 
 class LeftPanel(wx.Panel):
     """ The left side of the GUI"""
@@ -183,7 +185,7 @@ class MainFrame(wx.Frame):
         if dialog.ShowModal() == wx.ID_OK:
             f = open(dialog.GetPath(), 'rb')
             # load and parse the file
-            self.data = parser.SVNDumpFileParser(f.read())
+            self.data = SVNDumpFileParser(f.read())
             self.data.parse()
             self.__populateRevisions()
             f.close()
@@ -199,7 +201,7 @@ class MainFrame(wx.Frame):
         # if ok was clicked
         if dialog.ShowModal() == wx.ID_OK:
             # load the data into the parser and write the file
-            w = parser.SVNDumpFileWriter(self.data)
+            w = SVNDumpFileWriter(self.data)
             w.writeFile(dialog.GetPath())
         
     def revisionSelect(self, event):
