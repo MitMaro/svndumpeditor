@@ -5,7 +5,7 @@
   Website: http://www.mitmaro.ca/projects/svneditor/
            http://code.google.com/p/svndumpeditor/
     Email: svndump@mitmaro.ca
-  Created: June 26, 2009; Updated August 09, 2009
+  Created: June 26, 2009; Updated August 10, 2009
   Purpose: The Subversion dump file parser
  License:
 Copyright (c) 2009, Tim Oram
@@ -57,10 +57,10 @@ class SVNDumpFileParser:
     def parseHeaderLine(self, line):
         """ Parses a line thats a header, raises an error when invalid line is
         passed """
-        tmp = line.split()
+        tmp = line.split(':')
         if len(tmp) is not 2:
             raise ParseError("ERROR: Invalid Header Line (" + line + ")")
-        return tmp[1]
+        return tmp[1].lstrip()
     
     def skipEmptyLine(self):
         """ Skips a line that is checked to be empty. If it is not a error is 
@@ -72,7 +72,8 @@ class SVNDumpFileParser:
     def skipEmptyLines(self, line = ""):
         """ Skips lines till a non empty line is found. Returns the non empty 
         line """
-        while line == "" : line = self.dumpfile.getNextLine()
+        line = line.strip()
+        while line == "" : line = self.dumpfile.getNextLine().strip()
         return line
     
     def parse(self):
@@ -119,7 +120,7 @@ class SVNDumpFileParser:
                     
                     # parse the revision property data without PROPS-END 
                     rev.property_data = PropertyData(
-                        self.dumpfile.getChunk(int(rev.content_length))[:-10]
+                        self.dumpfile.getChunk(int(rev.prop_content_length))[:-10]
                     )
                     rev.property_data.parse()
                     
@@ -187,20 +188,3 @@ class SVNDumpFileParser:
             print("Parser Error - " + e.message)
             return False
         return True
-    
-    
-
-if __name__ == "__main__":
-    f = open('/Users/mitmaro/mmp2009.dump', 'rb')
-    # load and parse the file
-    data = SVNDumpFileParser(f.read())
-    data.parse()
-    
-    from SubversionDumpWriter import SVNDumpFileWriter
-    
-    writer = SVNDumpFileWriter(data)
-    
-    writer.writeFile('/Users/mitmaro/test.dump')
-    
-    
-    f.close()

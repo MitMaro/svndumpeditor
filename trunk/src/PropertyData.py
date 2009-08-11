@@ -5,7 +5,7 @@
   Website: http://www.mitmaro.ca/projects/svneditor/
            http://code.google.com/p/svndumpeditor/
     Email: svndump@mitmaro.ca
-  Created: August 09, 2009; Updated August 09, 2009
+  Created: August 09, 2009; Updated August 10, 2009
   Purpose: Holds a Subversion revision's property data
  License:
 Copyright (c) 2009, Tim Oram
@@ -64,7 +64,7 @@ class PropertyData:
                 # get a line
                 line = self.getNextLine()
                 tmp = line.split()
-                if len(tmp) is not 2 and tmp[0] is not "K":
+                if len(tmp) is not 2 or tmp[0] is not "K":
                     raise ParseError("Invalid Property Key")
                 
                 # extract the key value
@@ -76,7 +76,7 @@ class PropertyData:
                 line = self.getNextLine()
 
                 tmp = line.split()
-                if len(tmp) is not 2 and tmp[0] is not "V":
+                if len(tmp) is not 2 or tmp[0] is not "V":
                     raise ParseError("Invalid Property Value")
                 
                 # extract the value value
