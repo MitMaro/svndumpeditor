@@ -5,7 +5,7 @@
   Website: http://www.mitmaro.ca/projects/svneditor/
            http://code.google.com/p/svndumpeditor/
     Email: svndump@mitmaro.ca
-  Created: June 26, 2009; Updated August 09, 2009
+  Created: June 26, 2009; Updated August 10, 2009
   Purpose: Holds a Subversion revisions node data
  License:
 Copyright (c) 2009, Tim Oram
@@ -37,6 +37,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import __future__
 import hashlib
+
+from Exceptions import ParseError
 
 class Node:
     """ Describes a subversion node """
@@ -93,7 +95,7 @@ class Node:
         name = name.strip()
         value = value.strip()
         if(name not in self.properties):
-            print("NOTICE: Unrecognised Property (" + name + ")")
+            raise ParseError("Unrecognised Property (" + name + ")")
         self.properties[name] = value
     
     def updateText(self, value):
@@ -113,7 +115,7 @@ class Node:
             prop_length = self.property_data.calculateLength()
         else:
             prop_length = 0
-            
+
         # only update the content and text length if they were given
         if self.properties['Text-content-length'] is not None:
             self.properties['Text-content-length'] = str(text_length)
