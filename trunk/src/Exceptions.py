@@ -5,7 +5,7 @@
   Website: http://www.mitmaro.ca/projects/svneditor/
            http://code.google.com/p/svndumpeditor/
     Email: svndump@mitmaro.ca
-  Created: June 26, 2009, 2009; Updated August 09, 2009
+  Created: June 26, 2009, 2009; Updated August 11, 2009
   Purpose: Various Exceptions
  License:
 Copyright (c) 2009, Tim Oram
@@ -43,8 +43,18 @@ class ParseError(Exception):
     """ Raised when the dump contains invalid data """
     
     def __init__(self, message = ""):
-        self.message = message
+        self._message = message
     def _get_message(self): return self._message
     def _set_message(self, message): self._message = message
     message = property(_get_message, _set_message)
-
+    
+class EndOfRevision(Exception):
+    """ When the end of a revision is found. """
+    
+    def __init__(self, line = ""):
+        self._line = line
+    
+    def _get_line(self): return self._line
+    def _set_line(self, line): self._line = line
+    line = property(_get_line, _set_line)
+    
