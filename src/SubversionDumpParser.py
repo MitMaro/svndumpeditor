@@ -5,7 +5,7 @@
   Website: http://www.mitmaro.ca/projects/svneditor/
            http://code.google.com/p/svndumpeditor/
     Email: svndump@mitmaro.ca
-  Created: June 26, 2009; Updated August 10, 2009
+  Created: June 26, 2009; Updated August 18, 2009
   Purpose: The Subversion dump file parser
  License:
 Copyright (c) 2009, Tim Oram
@@ -53,6 +53,7 @@ class SVNDumpFileParser:
         self.log_version = 0
         self.uuid = ''
         self.revisions = []
+        self.revisions_lookup = {}
         
     def parseHeaderLine(self, line):
         """ Parses a line thats a header, raises an error when invalid line is
@@ -76,105 +77,126 @@ class SVNDumpFileParser:
         while line == "" : line = self.dumpfile.getNextLine().strip()
         return line
     
+    def parseDumpHead(self):
+        try:
+            # get the version
+            line = self.dumpfile.getNextLine()
+            if line[0:27] != 'SVN-fs-dump-format-version:':
+                raise ParseError('ERROR: No Version Found In File')
+            self.log_version = self.parseHeaderLine(line)
+            
+            self.skipEmptyLine()
+            
+            # get the UUID
+            line = self.dumpfile.getNextLine()
+            if line[0:4] == 'UUID':
+                self.uuid = self.parseHeaderLine(line)
+                self.skipEmptyLine()
+                line = self.dumpfile.getNextLine()
+                
+            return line
+                
+        except EndOfDump:
+            raise ParseError("Unexpected end of dump file")
+    
+    def parseRevision(self, line):
+        try:
+            # find the next revision
+            if line[0:16] != 'Revision-number:':
+                raise ParseError('ERROR: No Revision Found')
+            rev = Revision(int(self.parseHeaderLine(line)))
+            
+            # get revision information
+            line = self.dumpfile.getNextLine()
+            if line[0:20] != 'Prop-content-length:':
+                raise ParseError("ERROR: No Property Content Length")
+            rev.prop_content_length = self.parseHeaderLine(line)
+
+            line = self.dumpfile.getNextLine()
+            if line[0:15] != 'Content-length:':
+                raise ParseError("ERROR: No Content Length")
+            rev.content_length = self.parseHeaderLine(line)
+            
+            
+            # parse the revision property data without PROPS-END 
+            rev.property_data = PropertyData(
+                self.dumpfile.getChunk(int(rev.prop_content_length))[:-10]
+            )
+            rev.property_data.parse()
+            
+            return [self.dumpfile.getNextLine(), rev]
+            
+        except EndOfDump:
+            raise ParseError("Unexpected end of dump file")
+        
+    def parseNode(self, line):
+        node = Node()
+        
+        try:
+            # get node properties
+            line = self.skipEmptyLines(line)
+            
+            # sometimes there is an empty revision, perhaps hot the greatest
+            # way to handle this
+            if line[0:16] == 'Revision-number:': raise EndOfRevision(line)
+            
+            # get the nodes properties
+            while len(line) is not 0:
+                s = line.split(':')
+                if len(s) is not 2:
+                    raise ParseError("Invalid property ("+line+")")
+                node.setProperty(s[0], s[1])
+                line = self.dumpfile.getNextLine()
+            
+            # sometimes there is no content (add dir, deletes, etc)
+            # so we check there is content before trying to look for
+            # the content
+            c_len = node.properties['Content-length']
+            if c_len is not None:
+                try:
+                    # get node content
+                    d = SVNDumpData(self.dumpfile \
+                                     .getChunk(int(c_len)))
+                    # only if there is property data
+                    p_len = node.properties['Prop-content-length']
+                    if(p_len is not None):
+                        # parse the node property data
+                        node.property_data = PropertyData(
+                          d.getChunk(int(p_len))[:-10]
+                        )
+                        node.property_data.parse()
+                        
+                    # get the node text data (if there is any)
+                    node.text_data = d.getRemaining()
+                except EndOfDump: pass # EOD is allowed here
+            return [line, node]
+        except EndOfDump:
+            raise ParseError("Unexpected end of dump file")
+        
+
+    
     def parse(self):
         """ Parses a dump file creating the python data structure """
         try:
-            try:
-                # get the version
-                line = self.dumpfile.getNextLine()
-                if line[0:27] != 'SVN-fs-dump-format-version:':
-                    raise ParseError('ERROR: No Version Found In File')
-                self.log_version = self.parseHeaderLine(line)
-                
-                self.skipEmptyLine()
-                
-                # get the UUID
-                line = self.dumpfile.getNextLine()
-                if line[0:4] == 'UUID':
-                    self.uuid = self.parseHeaderLine(line)
-                    self.skipEmptyLine()
-                    line = self.dumpfile.getNextLine()
-                    
-            except EndOfDump:
-                raise ParseError("Unexpected end of dump file")
-                
+            # parse out the dump head data
+            line = self.parseDumpHead()
+            
             # get the rest of the data
             while True:
-                try:
-                    # find the next revision
-                    if line[0:16] != 'Revision-number:':
-                        raise ParseError('ERROR: No Revision Found')
-                    rev = Revision(int(self.parseHeaderLine(line)))
-                    
-                    # get revision information
-                    line = self.dumpfile.getNextLine()
-                    if line[0:20] != 'Prop-content-length:':
-                        raise ParseError("ERROR: No Property Content Length")
-                    rev.prop_content_length = self.parseHeaderLine(line)
-
-                    line = self.dumpfile.getNextLine()
-                    if line[0:15] != 'Content-length:':
-                        raise ParseError("ERROR: No Content Length")
-                    rev.content_length = self.parseHeaderLine(line)
-                    
-                    
-                    # parse the revision property data without PROPS-END 
-                    rev.property_data = PropertyData(
-                        self.dumpfile.getChunk(int(rev.prop_content_length))[:-10]
-                    )
-                    rev.property_data.parse()
-                    
-                    line = self.dumpfile.getNextLine()
-                    
-                except EndOfDump:
-                    raise ParseError("Unexpected end of dump file")
-                
+                # parse the revision data
+                line, rev = self.parseRevision(line)
                 # get the node information for revision
                 while True:
-                    node = Node()
-                    
                     try:
-
-                        # get node properties
-                        line = self.skipEmptyLines(line)
-                        
-                        # sometimes there is an empty revision
-                        if line[0:16] == 'Revision-number:': break
-                        
-                        # get the nodes properties
-                        while len(line) is not 0:
-                            s = line.split(':')
-                            if len(s) is not 2:
-                                raise ParseError("Invalid property ("+line+")")
-                            node.setProperty(s[0], s[1])
-                            line = self.dumpfile.getNextLine()
-                        
-                        # sometimes there is no content (add dir, deletes, etc)
-                        # so we check there is content before trying to look for
-                        # the content
-                        c_len = node.properties['Content-length']
-                        if c_len is not None:
-                            try:
-                                # get node content
-                                d = SVNDumpData(self.dumpfile \
-                                                 .getChunk(int(c_len)))
-                                # only if there is property data
-                                p_len = node.properties['Prop-content-length']
-                                if(p_len is not None):
-                                    # parse the node property data
-                                    node.property_data = PropertyData(
-                                      d.getChunk(int(p_len))[:-10]
-                                    )
-                                    node.property_data.parse()
-                                    
-                                # get the node text data (if there is any)
-                                node.text_data = d.getRemaining()
-                            except EndOfDump: pass # EOD is allowed here
-                            
+                        line, node = self.parseNode(line)
                         # add the node to the revision
                         rev.nodes.append(node)
-                    except EndOfDump:
-                        raise ParseError("Unexpected end of dump file")
+                        
+                    # we made it to the new revision during the node parse
+                    except EndOfRevision, e:
+                        line = e.line
+                        break
+                    
                     try:
                         line = self.skipEmptyLines()
                         if line[0:16] == 'Revision-number:': break
@@ -182,9 +204,8 @@ class SVNDumpFileParser:
                         # end of file allowed here
                         self.revisions.append(rev)
                         return True
-    
+                # add the revision to the data
                 self.revisions.append(rev)
         except ParseError, e:
             print("Parser Error - " + e.message)
             return False
-        return True
