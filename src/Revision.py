@@ -5,7 +5,7 @@
   Website: http://www.mitmaro.ca/projects/svneditor/
            http://code.google.com/p/svndumpeditor/
     Email: svndump@mitmaro.ca
-  Created: June 26, 2009, 2009; Updated August 09, 2009
+  Created: June 26, 2009, 2009; Updated August 10, 2009
   Purpose: Holds a Subversion revision data
  License:
 Copyright (c) 2009, Tim Oram
@@ -48,3 +48,4 @@ class Revision:
         self.revision_number = rev
         self.property_data = None
         self.nodes = []
+        self.nodes_lookup = {}
