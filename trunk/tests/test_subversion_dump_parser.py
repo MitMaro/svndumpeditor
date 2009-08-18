@@ -2,7 +2,8 @@
      File: /tests/test_subversion_dump_parser.py
   Project: Subversion Dump Editor
        By: Tim Oram [t.oram@mitmaro.ca]
-  Website: http://www.mitmaro.ca/projects/svneditor
+  Website: http://www.mitmaro.ca/projects/svneditor/
+           http://code.google.com/p/svndumpeditor/
     Email: svndump@mitmaro.ca
   Created: August 18, 2009; Updated August 18, 2009
  License:
