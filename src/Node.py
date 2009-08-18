@@ -5,7 +5,7 @@
   Website: http://www.mitmaro.ca/projects/svneditor/
            http://code.google.com/p/svndumpeditor/
     Email: svndump@mitmaro.ca
-  Created: June 26, 2009; Updated August 10, 2009
+  Created: June 26, 2009; Updated August 11, 2009
   Purpose: Holds a Subversion revisions node data
  License:
 Copyright (c) 2009, Tim Oram
@@ -40,6 +40,11 @@ import hashlib
 
 from Exceptions import ParseError
 
+class Reference:
+    def __init__(self, rev, node):
+        self.revision = rev
+        self.node = node
+
 class Node:
     """ Describes a subversion node """
     def __init__(self):
@@ -62,9 +67,9 @@ class Node:
             "Text-delta-base-md5": None,
             "Text-delta-base-sha1": None,
             "Text-copy-source-sha1": None,
+            "Text-copy-source-md5": None,
             "Node-copyfrom-rev": None,
-            "Node-copyfrom-path": None,
-            "Text-copy-source-md5": None
+            "Node-copyfrom-path": None
         }
         
         self.properties_order = [
@@ -83,12 +88,15 @@ class Node:
             'Text-delta-base-sha1',
             'Text-content-md5',
             'Text-content-sha1',
-            'Content-length',
+            'Content-length'
         ]
         
         # property and text data
         self.property_data = None
         self.text_data = None
+        
+        # other nodes that reference this node
+        self.references = []
         
     def setProperty(self, name, value):
         """ Set a node property """
@@ -97,7 +105,7 @@ class Node:
         if(name not in self.properties):
             raise ParseError("Unrecognised Property (" + name + ")")
         self.properties[name] = value
-    
+        
     def updateText(self, value):
         """ Update the nodes text content but only if there is content """
         if self.text_data is not None:
