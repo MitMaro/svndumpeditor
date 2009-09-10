@@ -5,7 +5,7 @@
   Website: http://www.mitmaro.ca/projects/svneditor/
            http://code.google.com/p/svndumpeditor/
     Email: svndump@mitmaro.ca
-  Created: August 18, 2009; Updated August 18, 2009
+  Created: August 18, 2009; Updated September 09, 2009
  License:
 Copyright (c) 2009, Tim Oram
 All rights reserved.
@@ -34,7 +34,7 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
-from Node import Node, Reference
+from Node import Node
 from PropertyData import PropertyData, PropertyKeyValue
 from Exceptions import ParseError
 from nose.tools import raises, assert_equal
@@ -88,7 +88,6 @@ class TestNode:
         assert_equal(self.node.properties['Text-content-sha1'], 'c92990287c37102e847f507f1ad2a6a477a451cc')
 
     def setUp(self):
-        print "Here"
 
         self.node = Node()
         self.node.text_data = "Some Text Data"
@@ -107,10 +106,3 @@ class TestNode:
 
     def tearDown(self):
         pass
-
-class TestReference:
-    
-    def testReference(self):
-        ref = Reference(1, 2)
-        assert_equal(ref.revision, 1)
-        assert_equal(ref.node, 2)
