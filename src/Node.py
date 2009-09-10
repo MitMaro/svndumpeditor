@@ -5,7 +5,7 @@
   Website: http://www.mitmaro.ca/projects/svneditor/
            http://code.google.com/p/svndumpeditor/
     Email: svndump@mitmaro.ca
-  Created: June 26, 2009; Updated August 11, 2009
+  Created: June 26, 2009; Updated August 18, 2009
   Purpose: Holds a Subversion revisions node data
  License:
 Copyright (c) 2009, Tim Oram
@@ -39,11 +39,6 @@ import __future__
 import hashlib
 
 from Exceptions import ParseError
-
-class Reference:
-    def __init__(self, rev, node):
-        self.revision = rev
-        self.node = node
 
 class Node:
     """ Describes a subversion node """
@@ -110,7 +105,7 @@ class Node:
         """ Update the nodes text content but only if there is content """
         if self.text_data is not None:
             self.text_data = value
-        
+
     def updateContentLength(self):
         """ Update the length data for the node """
         
