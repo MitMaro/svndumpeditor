@@ -5,7 +5,7 @@
   Website: http://www.mitmaro.ca/projects/svneditor/
            http://code.google.com/p/svndumpeditor/
     Email: svndump@mitmaro.ca
-  Created: June 26, 2009, 2009; Updated August 10, 2009
+  Created: June 26, 2009, 2009; Updated October 13, 2009
   Purpose: Holds a Subversion revision data
  License:
 Copyright (c) 2009, Tim Oram
@@ -34,8 +34,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
-
-import __future__
 
 class Revision:
     """ Describes a subversion revision """
