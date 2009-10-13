@@ -5,7 +5,7 @@
   Website: http://www.mitmaro.ca/projects/svneditor/
            http://code.google.com/p/svndumpeditor/
     Email: svndump@mitmaro.ca
-  Created: June 26, 2009; Updated August 18, 2009
+  Created: June 26, 2009; Updated September 09, 2009
   Purpose: The Subversion dump file parser
  License:
 Copyright (c) 2009, Tim Oram
@@ -53,6 +53,7 @@ class SVNDumpFileParser:
         self.log_version = 0
         self.uuid = ''
         self.revisions = []
+        # connects revision number to index in self.revisions
         self.revisions_lookup = {}
         
     def parseHeaderLine(self, line):
@@ -191,7 +192,13 @@ class SVNDumpFileParser:
                         line, node = self.parseNode(line)
                         # add the node to the revision
                         rev.nodes.append(node)
-                        
+                                                
+                        # add node to the lookup dictionary
+                        if node.properties['Node-path'] is not None:
+                            rev.nodes_lookup[node.properties['Node-path']] = len(rev.nodes) - 1
+                        else:
+                            raise ParseError("Empty Node Path") # pragma: no cover
+                    
                     # we made it to the new revision during the node parse
                     except EndOfRevision, e:
                         line = e.line
@@ -206,6 +213,10 @@ class SVNDumpFileParser:
                         return True
                 # add the revision to the data
                 self.revisions.append(rev)
+                
+                # add to the revisions lookup dictionary
+                self.revisions_lookup[rev.revision_number] = len(self.revisions) - 1
+                
         except ParseError, e:
             print("Parser Error - " + e.message)
             return False
