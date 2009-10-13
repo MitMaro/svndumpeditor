@@ -1,10 +1,13 @@
-Version: 0.1
+Version: 0.2 beta
 [END-USER]
- ~ Property data is now completely parsed
- ~ Fixed the order that node properties were recreated
+ ~ Property data is now completely parsed.
+ ~ Fixed the order that node properties were recreated.
+ ~ Redesigned the user interface to make it look better.
+ ~ Added extra error handling.
 
 [DEVEL]
- ~ Refactored the parser.py file, it is now multiple files
+ ~ Refactored the parser.py file, it is now multiple files.
+ ~ Added unit tests.
 
 Version: 0.1 beta [July 1, 2009]
- ~ Initial Release
+ ~ Initial Release.
