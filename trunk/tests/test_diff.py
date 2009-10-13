@@ -5,7 +5,7 @@
   Website: http://www.mitmaro.ca/projects/svneditor/
            http://code.google.com/p/svndumpeditor/
     Email: svndump@mitmaro.ca
-  Created: September 09, 2009; Updated September 09, 2009
+  Created: September 09, 2009; Updated October 13, 2009
  License:
 Copyright (c) 2009, Tim Oram
 All rights reserved.
@@ -54,10 +54,10 @@ class TestDiff:
     def testCreateDiff(self):
         assert_equal(self.patch, ''.join(Diff.createDiff(" a\n b\n c\n d\n e\n", " a\n b\n f\n d\n e\n")))
 
-    def testApplyPatch(self):
+    def testApplyPatchWithPatchConflict(self):
         assert_false(Diff.applyPatch(" a\n b\n e\n d\n e\n", self.patch))
         
-    def testApplyPatchWithPatchConflict(self):
+    def testApplyPatch(self):
         assert_equal(" a\n b\n f\n d\n e\n", Diff.applyPatch(" a\n b\n c\n d\n e\n", self.patch))
 
     def testCreateVisualDiff(self):
