@@ -5,7 +5,7 @@
   Website: http://www.mitmaro.ca/projects/svneditor/
            http://code.google.com/p/svndumpeditor/
     Email: svndump@mitmaro.ca
-  Created: June 26, 2009; Updated August 09, 2009
+  Created: June 26, 2009; Updated October 13, 2009
   Purpose: The GUI that wraps the dump file parser and writer
  License:
 Copyright (c) 2009, Tim Oram
@@ -34,215 +34,156 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
+
 import wx # for the gui
+import Events
+import Widgets
 
 from SubversionDumpParser import SVNDumpFileParser # the dump parser
 from SubversionDumpWriter import SVNDumpFileWriter # the dump writer
 
-class LeftPanel(wx.Panel):
-    """ The left side of the GUI"""
-    def __init__(self, parent, *args, **kwargs):
-        wx.Panel.__init__(self, parent, *args, **kwargs)
-        
-        self.parent = parent
-        
-        #self.rev_id = wx.NewId()
-        
-        # labels, not very exciting
-        label1 = wx.StaticText(self, label = "Revisions:")
-        label2 = wx.StaticText(self, label = "Nodes:")
-        
-        # the revisions drop down boxes
-        self.revisions = wx.ComboBox(self, \
-                                     style=wx.CB_DROPDOWN | wx.CB_READONLY)
-        # the nodes list
-        self.nodes = wx.ListBox(self, wx.LB_SINGLE)
-        # the load and save dump buttons
-        self.load = wx.Button(self, label = "Load SVN Dump")
-        self.save = wx.Button(self, label = "Save SVN Dump")
-        
-        # bind some events
-        self.revisions.Bind(wx.EVT_COMBOBOX, parent.revisionSelect)
-        self.nodes.Bind(wx.EVT_LISTBOX, parent.nodeSelect)
-        self.load.Bind(wx.EVT_BUTTON, parent.loadFile)
-        self.save.Bind(wx.EVT_BUTTON, parent.saveFile)
-        
-        # place the widgets
-        sizer2 = wx.BoxSizer(wx.HORIZONTAL)
-        sizer2.AddStretchSpacer()
-        sizer2.Add(self.load, 0)
-        sizer2.Add(self.save, 0)
-        sizer1 = wx.BoxSizer(wx.VERTICAL)
-        sizer1.Add(label1, 0, wx.EXPAND)
-        sizer1.Add(self.revisions, 0, wx.EXPAND)
-        sizer1.Add(label2, 0, wx.EXPAND)
-        sizer1.Add(self.nodes, 1, wx.EXPAND)
-        sizer1.Add(sizer2, 0, wx.EXPAND)
-        
-        self.SetSizerAndFit(sizer1)
-        
-class RightPanel(wx.Panel):
-    """ The right panel """
-    def __init__(self, parent, *args, **kwargs):
-        wx.Panel.__init__(self, parent, *args, **kwargs)
-        
-        self.parent = parent
-        # Another label
-        label = wx.StaticText(self, label = "Revision File Text:")
-        # the content textarea
-        self.textarea = wx.TextCtrl(self, style = wx.TE_MULTILINE  | wx.HSCROLL)
-        # the save button
-        self.save = wx.Button(self, label = "Save File")
-        # Remove the cancel button for now
-        # the cancel/reset button for editing
-        #self.cancel = wx.Button(self, label = "Cancel")
-        
-        # bind the save button
-        self.save.Bind(wx.EVT_BUTTON, parent.saveContent)
-        
-        # place the widgets
-        sizer2 = wx.BoxSizer(wx.HORIZONTAL)
-        sizer2.AddStretchSpacer()
-        sizer2.Add(self.save, 0)
-        #sizer2.Add(self.cancel, 0)
-        sizer1 = wx.BoxSizer(wx.VERTICAL)
-        sizer1.Add(label, 0, wx.EXPAND)
-        sizer1.Add(self.textarea, 1, wx.EXPAND)
-        sizer1.Add(sizer2, 0, wx.EXPAND)
-        
-        self.SetSizerAndFit(sizer1)
 
-
-class MainFrame(wx.Frame):
-    """ the applications window/frame """
+class ApplicationWindow(wx.Frame):
+    """ The main application window, this class handles all the GUI creation """
     def __init__(self, *args, **kwargs):
         wx.Frame.__init__(self, *args, **kwargs)
 
-        # used to transform the list and combo boxes text into something usesful 
-        self.node_lookup = {}
-        self.revision_lookup = {}
+        right_sizer = wx.BoxSizer(wx.VERTICAL)
+        left_sizer = wx.BoxSizer(wx.VERTICAL) 
         
-        # will contain the parsed svn dump data
-        self.data = None
+        # the revision drop down
+        self.revisions = Widgets.RevisionsCombo(self)
+        right_sizer.AddSpacer(5)
+        right_sizer.Add(self.revisions, 0, wx.EXPAND)
         
-        # current working revision and node
-        self.rev = None
-        self.node = None
+        # the node list
+        self.node_list = Widgets.NodeList(self)
+        right_sizer.AddSpacer(5)
+        right_sizer.Add(self.node_list, 1, wx.EXPAND)
+        right_sizer.AddSpacer(5)
         
-        # create the two panels
-        self.left_panel = LeftPanel(self)
-        self.right_panel = RightPanel(self)
+        # the content viewer/editor
+        self.content = Widgets.NodeContent(self)
+        left_sizer.AddSpacer(5)
+        left_sizer.Add(self.content, 1, wx.EXPAND)
+        left_sizer.AddSpacer(5)
         
-        # and place them
-        sizer = wx.BoxSizer(wx.HORIZONTAL)
-        sizer.Add(self.left_panel, 0, wx.EXPAND)
-        sizer.Add(self.right_panel, 1, wx.EXPAND)
-        self.SetSizer(sizer)
+        # layout the main application
+        main_sizer = wx.BoxSizer()
+        main_sizer.AddSpacer(10)
+        main_sizer.Add(right_sizer, 2, wx.EXPAND)
+        main_sizer.AddSpacer(10)
+        main_sizer.Add(left_sizer, 5, wx.EXPAND)
+        main_sizer.AddSpacer(10)
+        self.SetSizer(main_sizer)
+        
+        # add the menu
+        self.menu = Widgets.MainMenu(self)        
+        self.SetMenuBar(self.menu)
+        
+        # add the status bar
+        self.status = Widgets.StatusBar(self)
+        self.SetStatusBar(self.status)
+        
+        # add the toolbar
+        self.toolbar = Widgets.ToolBar(self)
+        self.SetToolBar(self.toolbar)
         
         self.CenterOnScreen()
-        
-    def __populateRevisions(self):
-        """ Populate the revisions drop down """
-        self.revision_lookup.clear()
-        self.left_panel.revisions.Clear()
-        self.left_panel.nodes.Clear()
-        
-        for i, r in enumerate(self.data.revisions):
-            data_found = False
-            # check nodes for data
-            for n in r.nodes:
-                if n.text_data is not None:
-                    data_found = True
-                    break
-            # this runs when data was found
-            if data_found:
-                self.revision_lookup["Revision: " + str(r.revision_number)] = i
-                self.left_panel.revisions \
-                                  .Append("Revision: " + str(r.revision_number))
-            
-    def __populateNodes(self):
-        """ Populates the nodes list """
-        self.node_lookup.clear()
-        self.left_panel.nodes.Clear()
-        for i, n in enumerate(self.data.revisions[self.rev].nodes):
-            # only show nodes with editable data
-            if n.text_data is not None:
-                self.node_lookup[n.properties['Node-path']] = i
-                self.left_panel.nodes.Append(n.properties['Node-path'])
-            
-    def __populateContent(self, content):
-        """ Populates the content text area """
-        self.right_panel.textarea.ChangeValue(content)
 
-    def loadFile(self, event):
-        """ Loads the dump file and parses it """
+class App(ApplicationWindow):
+    """ The application logic class, this class gives the GUI functionality. """
+    def __init__(self, *args, **kwargs):
+        ApplicationWindow.__init__(self, *args, **kwargs)
+
+        self.data = None
+        self.revision_id = None
+        self.node_id = None
+        
+        # bind out custom events to do some work
+        self.Bind(Events.EVT_OPEN_DUMP, self.openSubversionDump)
+        self.Bind(Events.EVT_SAVE_DUMP, self.saveSubversionDump)
+        self.Bind(Events.EVT_CONTENT_SAVE, self.saveNodeContent)
+        self.Bind(Events.EVT_REVISION_CHANGE, self.showRevisionNodes)
+        self.Bind(Events.EVT_NODE_SELECT, self.showNodeContent)
+
+    def openSubversionDump(self, event):
+        """ Open and parse a subversion dump file """
         # create the dialog
-        dialog = wx.FileDialog(self,
-                               message = "Please Select a Subversion Dump File",
-                               style = wx.FD_FILE_MUST_EXIST | wx.FD_OPEN)
+        dialog = Widgets.OpenDialog(self)
         
         # if file was selected
         if dialog.ShowModal() == wx.ID_OK:
-            f = open(dialog.GetPath(), 'rb')
-            # load and parse the file
-            self.data = SVNDumpFileParser(f.read())
-            self.data.parse()
-            self.__populateRevisions()
-            f.close()
+            # load the file
+            try:
+                f = open(dialog.GetPath(), 'rb')
+                self.data = SVNDumpFileParser(f.read())
+                f.close()
+            except IOError:
+                self.status.set("Error Reading Subversion Dump File")
+                return
             
-    def saveFile(self, event):
+            # parse the dump
+            if not self.data.parse():
+                self.status.set("Error Parsing Subversion Dump File")
+                return
+            
+            self.status.set("Subversion Dump File Parsed Successfully")
+            
+            self.node_list.reset()
+            self.content.reset()
+            self.revisions.populate(self.data.revisions)
+    
+    def saveSubversionDump(self, event):
         """ Save the dump to a new file """
         
         # create the dialog
-        dialog = wx.FileDialog(self,
-                               message = "Please Select a Subversion Dump File",
-                               style = wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT)
+        dialog = Widgets.SaveDialog(self)
         
         # if ok was clicked
         if dialog.ShowModal() == wx.ID_OK:
             # load the data into the parser and write the file
-            w = SVNDumpFileWriter(self.data)
-            w.writeFile(dialog.GetPath())
-        
-    def revisionSelect(self, event):
-        """ Fired when a revision is selected """
-        # load the revision index from the lookup dict
-        self.rev = \
-            self.revision_lookup[self.left_panel.revisions.GetValue()]
-        self.__populateNodes()
-        
-    def nodeSelect(self, event):
-        """ Fired when a node is selected """
-        # load the node index from the lookup dict
-        self.node = self.node_lookup[self.left_panel.nodes.GetStringSelection()]
-        self.__populateContent(self.data.revisions[self.rev].nodes[self.node]
-                               .text_data)
-    
-    def saveContent(self, event):
+            try:
+                w = SVNDumpFileWriter(self.data)
+                w.writeFile(dialog.GetPath())
+            except IOError:
+                self.status.set("Error Exporting Subversion Dump File")
+                return
+            self.status.set("Subversion Dump File Exported")
+            
+    def saveNodeContent(self, event):
         """ Saves the edited file """
-        # Update the text
-        self.data.revisions[self.rev].nodes[self.node] \
-                               .updateText(self.right_panel.textarea.GetValue())
-        # recalculate the contents length
-        self.data.revisions[self.rev].nodes[self.node].updateContentLength()
-        # it the hash value
-        self.data.revisions[self.rev].nodes[self.node].updateHash()
         
+        if self.node_id is not None:
+            # Update the text
+            self.data.revisions[self.revision_id].nodes[self.node_id] \
+                                   .updateText(self.content.getContent())
+            # recalculate the contents length
+            self.data.revisions[self.revision_id].nodes[self.node_id] \
+                .updateContentLength()
+            # it the hash value
+            self.data.revisions[self.revision_id].nodes[self.node_id] \
+                .updateHash()
+            
+            self.status.set("Node Content Saved")
 
-if __name__ == '__main__':
+    def showRevisionNodes(self, event):
+        """ Show the nodes for the selected revisions """
+        self.content.reset()
+        self.revision_id = event.revision
+        self.node_list.populate(self.data.revisions[self.revision_id].nodes)
     
-    # calculate the size of the window to be 80% of the screen size
-    app = wx.PySimpleApp() # for mac only
-    #app = wx.App()
-    
-    rect = wx.ClientDisplayRect()
-    frame = MainFrame(None, title="Subversion Editor", \
-                      size=(rect[2] * .60, rect[3] * .80))
+    def showNodeContent(self, event):
+        """ Show the content of the selected node """
+        self.content.reset()
+        self.node_id = event.node
+        self.content.setContent(
+            self.data.revisions[self.revision_id].nodes[self.node_id].text_data)
+        
+if __name__ == '__main__':    
+    app = wx.PySimpleApp()
+    frame = App(None, title="Subversion Editor", size=(600, 400))
     frame.Show()
-    #frame.populateRevisions(d.revisions)
-    #frame.populateNodes(d.revisions[2].nodes)
-    #frame.populateContent(str(d.revisions[2].nodes[1].text_data))
-    
     app.MainLoop()
 
 
