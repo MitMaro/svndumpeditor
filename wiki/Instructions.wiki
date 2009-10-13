@@ -12,3 +12,4 @@
   # Click the "Export Dump" button in the tool bar and save the dump. (I recommend saving as a new file and not replacing the original)
   # Create a new subversion repository. (You could delete the old repository and recreate it but do this at your own risk)
   # Load your edited subversion repository using svnadmin: `svnadmin load /path/to/new/repository < new_svndump.dump`
+  
