@@ -5,7 +5,7 @@
 #  Website: http://www.mitmaro.ca/projects/svneditor/
 #           http://code.google.com/p/svndumpeditor/
 #     Email: svndump@mitmaro.ca
-#   Created: August 18, 2009; Updated August 18, 2009
+#   Created: August 18, 2009; Updated September 09, 2009
 #   Purpose: Generates a coverage report
 #  License:
 # Copyright (c) 2009, Tim Oram
@@ -51,5 +51,7 @@ echo -n ""
 nosetests -q --with-coverage --cover-erase --cover-package=SubversionDumpParser tests/test_subversion_dump_parser.py 2>&1  | grep SubversionDumpParser
 echo -n ""
 nosetests -q --with-coverage --cover-erase --cover-package=SubversionDumpWriter tests/test_subversion_dump_writer.py 2>&1 | grep SubversionDumpWriter
+echo -n "               "
+nosetests -q --with-coverage --cover-erase --cover-package=Diff tests/test_diff.py 2>&1 | grep Diff
 
 echo
