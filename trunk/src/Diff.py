@@ -5,7 +5,7 @@
   Website: http://www.mitmaro.ca/projects/svneditor/
            http://code.google.com/p/svndumpeditor/
     Email: svndump@mitmaro.ca
-  Created: September 02, 2009; Updated September 09, 2009
+  Created: September 02, 2009; Updated October 13, 2009
   Purpose: Contains some functions for creating and patching diffs
  License:
 Copyright (c) 2009, Tim Oram
@@ -78,7 +78,7 @@ def applyPatch(file, patch):
     patch_tmpfile.close()
     
     # path to patch should be settable
-    t = subprocess.call(["/usr/bin/patch", "-s",  data_tmpfile_name  , patch_tmpfile_name])
+    t = subprocess.call(["/usr/bin/patch", "-s",  data_tmpfile_name  , patch_tmpfile_name], stdout = subprocess.PIPE)
     # if patch returns anything other then 0 something bad happened
     if  t != 0:
         # deletes the reject file
