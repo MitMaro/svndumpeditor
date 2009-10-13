@@ -15,14 +15,14 @@ data then recreates the file making sure the dump file remains valid.
 == Documentation ===============================================================
 1) Create a subversion repository dump using svnadmin:
    svnadmin dump /path/to/repository > svndump.dump
-2) Launch Subversion Dump Editor and load the file into the program using the 
-   "Load SVN Dump" button in the lower left corner.
+2) Launch Subversion Dump Editor and load the file into the program using the
+   "Open Dump" button in the tool bar.
 3) Select a revision from the revisions drop down.
 4) Select a node from the nodes list.
 5) Edit the node content.
-6) Save your edits using the "Save File" button in the lower right corner.
+6) Save your edits using the "Save Content" button in the tool bar.
 7) Repeat for all edits you wish to make.
-8) Click the "Save SVN Dump" button in the lower left corner and save the dump.
+8) Click the "Export Dump" button in the tool bar and save the dump.
    (I recommend saving as a new file and not replacing the original)
 9) Create a new subversion repository.
    (You could delete the old repository and recreate it but do this at your own
@@ -42,11 +42,11 @@ wxPython (Version 2.8.9.2 tested, lower versions should work)
 
 == License =====================================================================
 Subversion Dump Editor is released under the MIT license.
-See the include LICENSE file to obtain a copy.
+See the included LICENSE file to obtain a copy.
 
 
 == Bug Reports =================================================================
 If you discover a bug in the software please file a bug report at:
-    http://mitmaro.gotdns.org/redmine/projects/show/svneditor
+    http://code.google.com/p/svndumpeditor/issues/
 Also report any errors that svnadmin might create about the dump file being
 invalid. 
