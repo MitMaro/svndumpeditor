@@ -5,7 +5,7 @@
   Website: http://www.mitmaro.ca/projects/svneditor/
            http://code.google.com/p/svndumpeditor/
     Email: svndump@mitmaro.ca
-  Created: August 09, 2009; Updated August 10, 2009
+  Created: August 09, 2009; Updated October 13, 2009
   Purpose: Holds a Subversion revision's property data
  License:
 Copyright (c) 2009, Tim Oram
@@ -35,7 +35,7 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
-from Exceptions import *
+from Exceptions import ParseError, EndOfDump
 
 class PropertyKeyValue:
     """ Describes a property key value pair. """
